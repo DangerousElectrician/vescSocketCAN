@@ -1,0 +1,3 @@
+create cpp object for this
+	read buffer for each vesc needs to have different filters
+	could possibly make file handle a parameter for get functions
