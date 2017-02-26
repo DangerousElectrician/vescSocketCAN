@@ -1,4 +1,5 @@
 #include "VescSocketCAN.h"
+#include <byteswap.h>
 
 Vesc::Vesc(char *interface, uint8_t controllerID) {
 	init_socketCAN(interface);
@@ -46,4 +47,32 @@ void Vesc::setRpm(float rpm) {
 }
 void Vesc::setPos(float pos) {
 	setPoint(CAN_PACKET_SET_CURRENT, pos*1000000);
+}
+
+void Vesc::processMessages() {
+	struct can_frame msg;
+	while(1) {
+		int a = read(s, &msg, sizeof(msg));
+		if(a == -1) break;
+		VESC_status status = * (VESC_status*) msg.data; // casting pointers!
+		// received data is big endian
+		_rpm = __bswap_32(status.rpm);
+		_current = ((int16_t) __bswap_16(status.current)) / 10.0; 
+		_duty_cycle = ((int16_t) __bswap_16(status.duty_cycle)) / 1000.0;
+	}
+}
+
+int Vesc::getRpm() {
+	processMessages();
+	return _rpm;
+}
+
+float Vesc::getCurrent() {
+	processMessages();
+	return _current;
+}
+
+float Vesc::getDutyCycle() {
+	processMessages();
+	return _duty_cycle;
 }

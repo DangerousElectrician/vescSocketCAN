@@ -4,5 +4,10 @@
 
 int main(int argc, char **argv) {
 	Vesc motor((char*) "can0", VESC_ID); //TODO: this char* thing is a bit iffy, is this the right way to do it
-	motor.setCurrent(0.1);
+	//motor.setCurrent(0.1);
+	while(1) {
+		std::cout << "amp " << motor.getCurrent() << "\t\t" << "duty " <<  motor.getDutyCycle() << "\t\trpm " << motor.getRpm() << std::endl;
+		//motor.getCurrent();
+		usleep(50000);
+	}
 }
