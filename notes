@@ -1,3 +1,44 @@
 create cpp object for this
 	read buffer for each vesc needs to have different filters
 	could possibly make file handle a parameter for get functions
+
+existing feedback
+	rpm: 32 bits
+		need this
+	current: 16 bits
+		need this
+	duty cycle: 16 bits
+		don't need this
+
+battery current is the current flowing throught the power input wires
+	about 0.4 watts is used when idle
+motor current is current throught the motor windings
+	this will be smaller than battery current
+	unless regenerating
+
+as5047p encoder is 14 bit
+does the vesc perform interpolation?
+the rctimer 5010 motors is too small for the vesc to run the sensorless observer properly
+
+needed features
+	command motor setpoint
+	limit switches
+	closed loop output
+		position, velocity, and force selectable
+	telemetry
+		sensor velocity: 16 bits
+		sensor position: 16 bits
+		motor current: 16 bits
+			slash effort
+
+		motor voltage: 16 bits
+		current throttle: 16 bits
+			this is the same as motor current
+
+wanted features
+	motor temp: have 16 bits need 8
+	controller temp: 8 bits
+	energy usage: 16 bits
+	configurabiltity
+
+sudo ip link set can0 type can bitrate 1000000 triple-sampling on; sudo ip link set can0 up
