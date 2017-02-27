@@ -27,6 +27,7 @@ class Vesc {
 		int32_t _rpm;
 		float _current;
 		float _duty_cycle;
+		float _position;
 		typedef struct VESC_set {
 			int set:32;
 		} VESC_set;
@@ -35,6 +36,11 @@ class Vesc {
 			int16_t current:16;
 			int16_t duty_cycle:16;
 		} VESC_status;
+		typedef struct VESC_status1{
+			int rpm:32;
+			int position:16;
+			int motorCurrent:16;
+		} VESC_status1;
 		void init_socketCAN(char *ifname);
 		void processMessages();
 	public:
@@ -48,7 +54,8 @@ class Vesc {
 			CAN_PACKET_FILL_RX_BUFFER_LONG,
 			CAN_PACKET_PROCESS_RX_BUFFER,
 			CAN_PACKET_PROCESS_SHORT_BUFFER,
-			CAN_PACKET_STATUS // 9
+			CAN_PACKET_STATUS, // 9
+			CAN_PACKET_STATUS1
 		} CAN_PACKET_ID;
 
 		Vesc(char *interface, uint8_t controllerID);
@@ -62,4 +69,5 @@ class Vesc {
 		int getRpm();
 		float getCurrent();
 		float getDutyCycle();
+		float getPosition();
 };

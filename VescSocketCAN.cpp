@@ -54,15 +54,17 @@ void Vesc::processMessages() {
 	while(1) {
 		int a = read(s, &msg, sizeof(msg));
 		if(a == -1) break;
-		VESC_status status;
 		switch( (msg.can_id & ~0x80000000 & ~_controllerID) >> 8) {
 			case CAN_PACKET_STATUS:
-				 status = * (VESC_status*) msg.data; // casting pointers!
 				// received data is big endian
-				_rpm = __bswap_32(status.rpm);
-				_current = ((int16_t) __bswap_16(status.current)) / 10.0; 
-				_duty_cycle = ((int16_t) __bswap_16(status.duty_cycle)) / 1000.0;
+				_rpm = __bswap_32((*(VESC_status*) msg.data).rpm); // pointer casting!
+				_current = ((int16_t) __bswap_16((*(VESC_status*) msg.data).current)) / 10.0; 
+				_duty_cycle = ((int16_t) __bswap_16((*(VESC_status*) msg.data).duty_cycle)) / 1000.0;
 				break;
+			case CAN_PACKET_STATUS1:
+				_rpm = (*(VESC_status1*) msg.data).rpm;
+				_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
+				_position = (*(VESC_status1*) msg.data).position / 1000.0;
 			default:
 				break;
 		}
@@ -82,4 +84,8 @@ float Vesc::getCurrent() {
 float Vesc::getDutyCycle() {
 	processMessages();
 	return _duty_cycle;
+}
+float Vesc::getPosition() {
+	processMessages();
+	return _position;
 }
