@@ -29,7 +29,7 @@ needed features
 		sensor velocity: 16 bits
 		sensor position: 16 bits
 		motor current: 16 bits
-			slash effort
+			same as effort
 
 		motor voltage: 16 bits
 		current throttle: 16 bits
@@ -42,6 +42,14 @@ wanted features
 	configurabiltity
 
 sudo ip link set can0 type can bitrate 500000 triple-sampling on; sudo ip link set can0 up
+	triple-sampling tells the can bus hardware to sample each bit 3 times (best 2 wins) to prevent timing errors
+		look up "can bus bit sampling"
+	can't disable sending of can frames here, have to do it in application
 
-do not set minimum to zero, 0.01 minimum
+cansend stops working after a while if there is no device connected to receive
+
+do not set minimum current to zero, 0.01 minimum
 	if set to zero, the motor will turn without any commanded input
+
+Changing a task in the broadcast manager is exactly the same as setting it up
+	use TX_SETUP as the opcode
