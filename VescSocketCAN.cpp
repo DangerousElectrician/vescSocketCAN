@@ -22,15 +22,35 @@ void Vesc::init_socketCAN(char *ifname) {
 
 //TODO: figure out whether or not a destructor is needed
 
+struct can_msg {
+	struct bcm_msg_head msg_head;
+	struct can_frame frame[1];
+} msg;
 void Vesc::setPoint(CAN_PACKET_ID mode, int setpoint) {
-	struct can_frame frame;
-	frame.can_id = mode << 8 | _controllerID | 0x80000000;
 	VESC_set set;
 	set.set = setpoint;
-	frame.can_dlc = sizeof(VESC_set);
-	memcpy(frame.data, &set, sizeof(VESC_set));
+	//struct can_frame frame;
+	//frame.can_id = mode << 8 | _controllerID | 0x80000000;
+	//frame.can_dlc = sizeof(VESC_set);
+	//memcpy(frame.data, &set, sizeof(VESC_set));
 
-	write(s, &frame, sizeof(struct can_frame));
+	//write(s, &frame, sizeof(struct can_frame));
+
+
+	msg.msg_head.opcode  = TX_SETUP;
+	msg.msg_head.can_id  = mode << 8 | _controllerID | 0x80000000;
+	msg.msg_head.flags   = SETTIMER|STARTTIMER|TX_CP_CAN_ID;
+	msg.msg_head.nframes = 1;
+	msg.msg_head.count = 0;
+	msg.msg_head.ival1.tv_sec = 0;
+	msg.msg_head.ival1.tv_usec = 0;
+	msg.msg_head.ival2.tv_sec = 0;
+	msg.msg_head.ival2.tv_usec = 1000*10;
+	//msg.frame[0].can_id    = 0x42; /* obsolete when using TX_CP_CAN_ID */
+	msg.frame[0].can_dlc   = sizeof(VESC_set);
+	memcpy(msg.frame[0].data, &set, 8);
+	write(sbcm, &msg, sizeof(msg));
+
 }
 
 void Vesc::setDuty(float dutyCycle) {
