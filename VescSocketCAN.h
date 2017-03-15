@@ -17,10 +17,13 @@
 
 
 class Vesc {
+	private:
 		struct ifreq ifr;
 		struct sockaddr_can addr;
 		int s;
 		int sbcm;
+
+		uint8_t _enable = 1;
 
 		uint8_t _controllerID;
 
@@ -65,6 +68,9 @@ class Vesc {
 		void setCurrentBrake(float current);
 		void setRpm(float rpm);
 		void setPos(float pos);
+
+		void enable();
+		void disable();
 
 		int getRpm();
 		float getCurrent();
