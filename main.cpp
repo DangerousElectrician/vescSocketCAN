@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 	//motor.setCurrent(0.1);
 	//float current = 0;
 	while(1) {
-		std::cout << std::setprecision(4) << "amp " << motor.getCurrent() << std::setw(9) << "\tduty " <<  motor.getDutyCycle() << std::setw(9) << "\trpm " << motor.getRpm() << std::setw(9) << "\tpos " <<motor.getPosition() << std::setw(9) << "\ttach " << motor.getTachometer() << std::setw(9) << "\twatt " << motor.getWattHours() << std::setw(9) << "\tVin " << motor.getVin() << std::setw(9) << "\ttempM " << motor.getTempMotor() << std::setw(9) << "\ttempP " << motor.getTempPCB() << std::endl;
+		std::cout << std::setprecision(4) << "amp " << motor.getCurrent() << std::setw(9) << "\tduty " <<  motor.getDutyCycle() << std::setw(9) << "\trpm " << motor.getRpm() << std::setw(9) << "\tpos " <<motor.getPosition() << std::setw(9) << "\ttach " << motor.getTachometer() << std::setw(9) << "\twatth " << motor.getWattHours() << std::setw(9) << "\tVin " << motor.getVin() << std::setw(9) << "\ttempM " << motor.getTempMotor() << std::setw(9) << "\ttempP " << motor.getTempPCB() << std::endl;
 		//motor.getCurrent();
 		//motor.setCurrent(current);
 		//current = current + 0.01;
