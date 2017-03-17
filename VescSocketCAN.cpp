@@ -96,6 +96,7 @@ void Vesc::processMessages() {
 				_rpm = (*(VESC_status1*) msg.data).rpm;
 				_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
 				_position = (*(VESC_status1*) msg.data).position / 1000.0;
+				break;
 			case CAN_PACKET_STATUS2:
 				_tachometer = (*(VESC_status2*) msg.data).tachometer;
 				break;
