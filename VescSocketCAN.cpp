@@ -1,5 +1,6 @@
 #include "VescSocketCAN.h"
 #include <byteswap.h>
+#include <cmath>
 
 Vesc::Vesc(char *interface, uint8_t controllerID) {
 	init_socketCAN(interface);
@@ -95,6 +96,18 @@ void Vesc::processMessages() {
 				_rpm = (*(VESC_status1*) msg.data).rpm;
 				_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
 				_position = (*(VESC_status1*) msg.data).position / 1000.0;
+			case CAN_PACKET_STATUS2:
+				_tachometer = (*(VESC_status2*) msg.data).tachometer;
+				break;
+			case CAN_PACKET_STATUS3:
+				_wattHours = (*(VESC_status3*) msg.data).wattHours / 1000.0;
+				_vin = (*(VESC_status3*) msg.data).voltage;
+				break;
+			case CAN_PACKET_STATUS4:
+				_tempMotor = (*(VESC_status4*) msg.data).tempMotor;
+				_tempPCB = (*(VESC_status4*) msg.data).tempPCB;
+				_fault_code = (mc_fault_code) (*(VESC_status4*) msg.data).faultCode;
+				_state = (mc_state) (*(VESC_status4*) msg.data).state;
 			default:
 				break;
 		}
@@ -118,4 +131,40 @@ float Vesc::getDutyCycle() {
 float Vesc::getPosition() {
 	processMessages();
 	return _position;
+}
+int Vesc::getTachometer() {
+	processMessages();
+	return _tachometer;
+}
+float Vesc::getWattHours() {
+	processMessages();
+	return _wattHours;
+}
+#define VIN_R1                          39000.0
+#define VIN_R2                          2200.0
+#define V_REG	3.3
+#define GET_INPUT_VOLTAGE(adc_val)     ((V_REG / 4095.0) * (float)adc_val * ((VIN_R1 + VIN_R2) / VIN_R2))
+float Vesc::getVin() {
+	processMessages();
+	return GET_INPUT_VOLTAGE(_vin);
+}
+#define NTC_RES_GND(adc_val)    (10000.0*adc_val/4095.0)/(1-adc_val/4095.0)
+#define NTC_RES(adc_val)        ((4095.0 * 10000.0) / adc_val - 10000.0)
+#define NTC_TEMP(adc_val)       (1.0 / ((log(NTC_RES(adc_val) / 10000.0) / 3434.0) + (1.0 / 298.15)) - 273.15) // use when ntc is connected to vcc
+#define NTC_TEMP_GND(adc_val)   (1.0 / ((log(NTC_RES_GND(adc_val) / 10000.0) / 3434.0) + (1.0 / 298.15)) - 273.15) // use when ntc is connected to ground
+float Vesc::getTempMotor() {
+	processMessages();
+	return NTC_TEMP_GND(_tempMotor);
+}
+float Vesc::getTempPCB() {
+	processMessages();
+	return NTC_TEMP(_tempPCB);
+}
+Vesc::mc_fault_code Vesc::getFaultCode() {
+	processMessages();
+	return _fault_code;
+}
+Vesc::mc_state Vesc::getState() {
+	processMessages();
+	return _state;
 }
