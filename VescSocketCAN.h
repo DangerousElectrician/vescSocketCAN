@@ -50,6 +50,7 @@ class Vesc {
 		float _position;
 		int32_t _tachometer;
 		float _wattHours;
+		float _inCurrent;
 		float _vin;
 		float _tempMotor;
 		float _tempPCB;
@@ -64,12 +65,13 @@ class Vesc {
 			int16_t current:16;
 			int16_t duty_cycle:16;
 		} VESC_status;
-		typedef struct VESC_status1{
+
+		// most updated 100hz
+		typedef struct VESC_status1 { // 64bits
 			int rpm:32;
 			int position:16;
 			int motorCurrent:16;
 		} VESC_status1;
-		// most updated 100hz
 
 		// slightly less updated 50hz
 		typedef struct VESC_status2 { // 32bits
@@ -77,11 +79,12 @@ class Vesc {
 		} VESC_status2;
 
 		// even less updated 10hz
-		typedef struct VESC_status3 { // 26bits
-			int wattHours:32;
+		typedef struct VESC_status3 { // 60bits
+			float wattHours;
+			int inCurrent:16;
 			unsigned voltage:12;
 		} VESC_status3;
-		typedef struct VESC_status4 { // 25bits
+		typedef struct VESC_status4 { // 29bits
 			unsigned tempMotor:12;
 			unsigned tempPCB:12;
 			unsigned faultCode:3;
@@ -107,17 +110,39 @@ class Vesc {
 			CAN_PACKET_STATUS1,
 			CAN_PACKET_STATUS2,
 			CAN_PACKET_STATUS3,
-			CAN_PACKET_STATUS4
+			CAN_PACKET_STATUS4,
 
+			CAN_PACKET_CONFIG,
+			CAN_PACKET_CONTROL
 		} CAN_PACKET_ID;
 
+		typedef enum {
+			CONTROL_MODE_DUTY = 0,
+			CONTROL_MODE_SPEED,
+			CONTROL_MODE_CURRENT,
+			CONTROL_MODE_CURRENT_BRAKE,
+			CONTROL_MODE_POS,
+			CONTROL_MODE_NONE,
+
+			CONTROL_MODE_CUSTOM,
+		} mc_control_mode;
+
+		typedef struct custom_control {
+			union {
+				float setpointf;
+				int setpointi;
+			};
+			unsigned control_mode:4;
+		} custom_control;
+
 		Vesc(char *interface, uint8_t controllerID);
-		void setPoint(CAN_PACKET_ID mode, int setpoint);
+		void setPoint(mc_control_mode mode, float setpoint);
 		void setDuty(float dutyCycle);
 		void setCurrent(float current);
 		void setCurrentBrake(float current);
 		void setRpm(float rpm);
 		void setPos(float pos);
+		void setCustom(float setpoint);
 
 		void enable();
 		void disable();
@@ -128,6 +153,7 @@ class Vesc {
 		float getPosition();
 		int getTachometer();
 		float getWattHours();
+		float getInCurrent();
 		float getVin();
 		float getTempMotor();
 		float getTempPCB();

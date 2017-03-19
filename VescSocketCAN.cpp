@@ -27,10 +27,11 @@ struct can_msg {
 	struct bcm_msg_head msg_head;
 	struct can_frame frame[1];
 } msg;
-void Vesc::setPoint(CAN_PACKET_ID mode, int setpoint) {
+void Vesc::setPoint(mc_control_mode mode, float setpoint) {
 	if(_enable) {
-		VESC_set set;
-		set.set = setpoint;
+		custom_control set;
+		set.setpointf = setpoint;
+		set.control_mode = mode;
 		//struct can_frame frame;
 		//frame.can_id = mode << 8 | _controllerID | 0x80000000;
 		//frame.can_dlc = sizeof(VESC_set);
@@ -40,7 +41,7 @@ void Vesc::setPoint(CAN_PACKET_ID mode, int setpoint) {
 
 
 		msg.msg_head.opcode  = TX_SETUP;
-		msg.msg_head.can_id  = mode << 8 | _controllerID | 0x80000000;
+		msg.msg_head.can_id  = CAN_PACKET_CONTROL << 8 | _controllerID | 0x80000000;
 		msg.msg_head.flags   = SETTIMER|STARTTIMER|TX_CP_CAN_ID;
 		msg.msg_head.nframes = 1;
 		msg.msg_head.count = 0;
@@ -49,7 +50,7 @@ void Vesc::setPoint(CAN_PACKET_ID mode, int setpoint) {
 		msg.msg_head.ival2.tv_sec = 0;
 		msg.msg_head.ival2.tv_usec = 1000*10;
 		//msg.frame[0].can_id    = 0x42; /* obsolete when using TX_CP_CAN_ID */
-		msg.frame[0].can_dlc   = sizeof(VESC_set);
+		msg.frame[0].can_dlc   = sizeof(custom_control);
 		memcpy(msg.frame[0].data, &set, 8);
 		write(sbcm, &msg, sizeof(msg));
 	}
@@ -57,19 +58,48 @@ void Vesc::setPoint(CAN_PACKET_ID mode, int setpoint) {
 }
 
 void Vesc::setDuty(float dutyCycle) {
-	setPoint(CAN_PACKET_SET_DUTY, dutyCycle*100000);
+	setPoint(CONTROL_MODE_DUTY, dutyCycle);
 }
 void Vesc::setCurrent(float current) {
-	setPoint(CAN_PACKET_SET_CURRENT, current*1000);
+	setPoint(CONTROL_MODE_CURRENT, current);
 }
 void Vesc::setCurrentBrake(float current) {
-	setPoint(CAN_PACKET_SET_CURRENT, current*1000);
+	setPoint(CONTROL_MODE_CURRENT_BRAKE, current);
 }
 void Vesc::setRpm(float rpm) {
-	setPoint(CAN_PACKET_SET_CURRENT, rpm);
+	setPoint(CONTROL_MODE_SPEED, rpm);
 }
 void Vesc::setPos(float pos) {
-	setPoint(CAN_PACKET_SET_CURRENT, pos*1000000);
+	setPoint(CONTROL_MODE_POS, pos);
+}
+void Vesc::setCustom(float setpoint) {
+	setPoint(CONTROL_MODE_CUSTOM, setpoint);
+	//if(_enable) {
+	//	custom_control set;
+	//	set.setpointf = setpoint;
+	//	set.control_mode = CONTROL_MODE_CUSTOM;
+	//	//struct can_frame frame;
+	//	//frame.can_id = mode << 8 | _controllerID | 0x80000000;
+	//	//frame.can_dlc = sizeof(VESC_set);
+	//	//memcpy(frame.data, &set, sizeof(VESC_set));
+
+	//	//write(s, &frame, sizeof(struct can_frame));
+
+
+	//	msg.msg_head.opcode  = TX_SETUP;
+	//	msg.msg_head.can_id  = CAN_PACKET_CONTROL << 8 | _controllerID | 0x80000000;
+	//	msg.msg_head.flags   = SETTIMER|STARTTIMER|TX_CP_CAN_ID;
+	//	msg.msg_head.nframes = 1;
+	//	msg.msg_head.count = 0;
+	//	msg.msg_head.ival1.tv_sec = 0;
+	//	msg.msg_head.ival1.tv_usec = 0;
+	//	msg.msg_head.ival2.tv_sec = 0;
+	//	msg.msg_head.ival2.tv_usec = 1000*10;
+	//	//msg.frame[0].can_id    = 0x42; /* obsolete when using TX_CP_CAN_ID */
+	//	msg.frame[0].can_dlc   = sizeof(custom_control);
+	//	memcpy(msg.frame[0].data, &set, 8);
+	//	write(sbcm, &msg, sizeof(msg));
+	//}
 }
 
 void Vesc::enable() {
@@ -101,7 +131,8 @@ void Vesc::processMessages() {
 				_tachometer = (*(VESC_status2*) msg.data).tachometer;
 				break;
 			case CAN_PACKET_STATUS3:
-				_wattHours = (*(VESC_status3*) msg.data).wattHours / 1000.0;
+				_wattHours = (*(VESC_status3*) msg.data).wattHours;
+				_inCurrent = (*(VESC_status3*) msg.data).inCurrent / 100.0;
 				_vin = (*(VESC_status3*) msg.data).voltage;
 				break;
 			case CAN_PACKET_STATUS4:
@@ -140,6 +171,10 @@ int Vesc::getTachometer() {
 float Vesc::getWattHours() {
 	processMessages();
 	return _wattHours;
+}
+float Vesc::getInCurrent() {
+	processMessages();
+	return _inCurrent;
 }
 #define VIN_R1                          39000.0
 #define VIN_R2                          2200.0
