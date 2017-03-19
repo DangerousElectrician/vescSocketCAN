@@ -1,7 +1,7 @@
 INCLUDES = -I.
 CXX=g++
-CFLAGS=-c -Wall
-LDFLAGS= -Wall
+CFLAGS=-c -Wall -Wextra
+LDFLAGS= -Wall -Wextra
 SOURCES= $(wildcard *.cpp)
 OBJECTS= $(SOURCES:%.cpp=build/%.o)
 EXECUTABLE=build/main
