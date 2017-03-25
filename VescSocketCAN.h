@@ -127,6 +127,18 @@ class Vesc {
 			CONTROL_MODE_CUSTOM,
 		} mc_control_mode;
 
+		typedef enum {
+			RESET_WATT_HOURS = 0,
+		} CONFIG_FIELD;
+
+		typedef struct custom_config_data {
+			union {
+				float setpointf;
+				int setpointi;
+			};
+			uint8_t config_enum;
+		} custom_config_data;
+
 		typedef struct custom_control {
 			union {
 				float setpointf;
@@ -159,4 +171,6 @@ class Vesc {
 		float getTempPCB();
 		mc_fault_code getFaultCode();
 		mc_state getState();
+
+		void resetWattHours();
 };

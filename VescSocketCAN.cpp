@@ -204,3 +204,15 @@ Vesc::mc_state Vesc::getState() {
 	processMessages();
 	return _state;
 }
+
+void Vesc::resetWattHours() {
+	custom_config_data config;
+	config.config_enum = RESET_WATT_HOURS;
+
+	struct can_frame frame;
+	frame.can_id = CAN_PACKET_CONFIG << 8 | _controllerID | 0x80000000;
+	frame.can_dlc = sizeof(custom_config_data);
+	memcpy(frame.data, &config, sizeof(custom_config_data));
+
+	write(s, &frame, sizeof(struct can_frame));
+}
