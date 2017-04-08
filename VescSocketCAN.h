@@ -89,6 +89,7 @@ class Vesc {
 			unsigned tempPCB:12;
 			unsigned faultCode:3;
 			unsigned state:2;
+			//unsigned encoderIndex:1;
 		} VESC_status4;
 
 
@@ -173,4 +174,5 @@ class Vesc {
 		mc_state getState();
 
 		void resetWattHours();
+		//bool encoderIndexFound();
 };
