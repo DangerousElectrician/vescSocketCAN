@@ -10,15 +10,19 @@ Vesc::Vesc(char *interface, uint8_t controllerID) {
 void Vesc::init_socketCAN(char *ifname) {
 	
 	s = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW); //create nonblocking raw can socket
+	if(s == -1) throw "Unable to create raw CAN socket";
 	strcpy(ifr.ifr_name, ifname);
 	ioctl(s, SIOCGIFINDEX, &ifr); 
 	addr.can_family = AF_CAN; 
 	addr.can_ifindex = ifr.ifr_ifindex; 
 	
-	bind(s, (struct sockaddr *)&addr, sizeof(addr));
+	int ret = bind(s, (struct sockaddr *)&addr, sizeof(addr));
+	if(ret == -1) throw "Unable to bind raw CAN socket";
 
 	sbcm = socket(PF_CAN, SOCK_DGRAM, CAN_BCM);
-	connect(sbcm, (struct sockaddr *)&addr, sizeof(addr));
+	if(sbcm == -1) throw "Unable to create bcm socket";
+	ret = connect(sbcm, (struct sockaddr *)&addr, sizeof(addr));
+	if(ret == -1) throw "Unable to connect bcm socket";
 }
 
 //TODO: figure out whether or not a destructor is needed
