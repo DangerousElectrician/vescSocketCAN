@@ -25,7 +25,8 @@ void Vesc::init_socketCAN(char *ifname) {
 	if(ret == -1) throw "Unable to connect bcm socket";
 }
 
-//TODO: figure out whether or not a destructor is needed
+//figure out whether or not a destructor is needed
+//destructor is not needed because c++ objects should handle it
 
 struct can_msg {
 	struct bcm_msg_head msg_head;
