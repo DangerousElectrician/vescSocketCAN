@@ -120,33 +120,38 @@ void Vesc::processMessages() {
 	while(1) {
 		int a = read(s, &msg, sizeof(msg));
 		if(a == -1) break;
-		switch( (msg.can_id & ~0x80000000 & ~_controllerID) >> 8) {
-			case CAN_PACKET_STATUS: //default status message, probably going to be unused but we can handle it if it does appear
-				// received data is big endian
-				_rpm = __bswap_32((*(VESC_status*) msg.data).rpm); // pointer casting!
-				_current = ((int16_t) __bswap_16((*(VESC_status*) msg.data).current)) / 10.0; 
-				_duty_cycle = ((int16_t) __bswap_16((*(VESC_status*) msg.data).duty_cycle)) / 1000.0;
-				break;
-			case CAN_PACKET_STATUS1: //custom status message
-				_rpm = (*(VESC_status1*) msg.data).rpm;
-				_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
-				_position = (*(VESC_status1*) msg.data).position / 1000.0;
-				break;
-			case CAN_PACKET_STATUS2:
-				_tachometer = (*(VESC_status2*) msg.data).tachometer;
-				break;
-			case CAN_PACKET_STATUS3:
-				_wattHours = (*(VESC_status3*) msg.data).wattHours;
-				_inCurrent = (*(VESC_status3*) msg.data).inCurrent / 100.0;
-				_vin = (*(VESC_status3*) msg.data).voltage;
-				break;
-			case CAN_PACKET_STATUS4:
-				_tempMotor = (*(VESC_status4*) msg.data).tempMotor;
-				_tempPCB = (*(VESC_status4*) msg.data).tempPCB;
-				_fault_code = (mc_fault_code) (*(VESC_status4*) msg.data).faultCode;
-				_state = (mc_state) (*(VESC_status4*) msg.data).state;
-			default:
-				break;
+		if( (msg.can_id & ~0x80000000 & 0xFF) == _controllerID) {
+			gettimeofday(&_prevmsgtime, NULL);	
+
+			switch( (msg.can_id & ~0x80000000 & ~_controllerID) >> 8) {
+				case CAN_PACKET_STATUS: //default status message, probably going to be unused but we can handle it if it does appear
+					// received data is big endian
+					//_rpm = __bswap_32((*(VESC_status*) msg.data).rpm); // pointer casting!
+					//_current = ((int16_t) __bswap_16((*(VESC_status*) msg.data).current)) / 10.0; 
+					_duty_cycle = ((int16_t) __bswap_16((*(VESC_status*) msg.data).duty_cycle)) / 1000.0;
+					break;
+				case CAN_PACKET_STATUS1: //custom status message
+					_rpm = (*(VESC_status1*) msg.data).rpm;
+					_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
+					_position = (*(VESC_status1*) msg.data).position / 1000.0;
+					break;
+				case CAN_PACKET_STATUS2:
+					_tachometer = (*(VESC_status2*) msg.data).tachometer;
+					break;
+				case CAN_PACKET_STATUS3:
+					_wattHours = (*(VESC_status3*) msg.data).wattHours;
+					_inCurrent = (*(VESC_status3*) msg.data).inCurrent / 100.0;
+					_vin = (*(VESC_status3*) msg.data).voltage;
+					break;
+				case CAN_PACKET_STATUS4:
+					_tempMotor = (*(VESC_status4*) msg.data).tempMotor;
+					_tempPCB = (*(VESC_status4*) msg.data).tempPCB;
+					_fault_code = (mc_fault_code) (*(VESC_status4*) msg.data).faultCode;
+					_state = (mc_state) (*(VESC_status4*) msg.data).state;
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -220,4 +225,21 @@ void Vesc::resetWattHours() {
 	memcpy(frame.data, &config, sizeof(custom_config_data));
 
 	write(s, &frame, sizeof(struct can_frame));
+}
+int timediffms(struct timeval tv, struct timeval last_tv) {
+                // stolen from candump.c
+                struct timeval diff;
+                diff.tv_sec  = tv.tv_sec  - last_tv.tv_sec;
+                diff.tv_usec = tv.tv_usec - last_tv.tv_usec;
+                if (diff.tv_usec < 0)
+                        diff.tv_sec--, diff.tv_usec += 1000000;
+                if (diff.tv_sec < 0)
+                        diff.tv_sec = diff.tv_usec = 0;
+                return diff.tv_sec*1000 + diff.tv_usec/1000;
+
+        }
+bool Vesc::isAlive() {
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	return timediffms(now, _prevmsgtime) < 100;
 }

@@ -14,6 +14,7 @@
 #include <linux/can/raw.h>
 #include <linux/can/bcm.h>
 
+#include <sys/time.h>
 
 
 class Vesc {
@@ -56,6 +57,8 @@ class Vesc {
 		float _tempPCB;
 		mc_fault_code _fault_code;
 		mc_state _state;
+
+		struct timeval _prevmsgtime;
 
 		typedef struct VESC_set {
 			int set:32;
@@ -175,4 +178,5 @@ class Vesc {
 
 		void resetWattHours();
 		//bool encoderIndexFound();
+		bool isAlive();
 };
