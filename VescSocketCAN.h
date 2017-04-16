@@ -41,6 +41,8 @@ class Vesc {
 		int s;
 		int sbcm;
 
+		uint32_t _quirks = 0;
+
 		uint8_t _enable = 1;
 
 		uint8_t _controllerID;
@@ -152,6 +154,7 @@ class Vesc {
 		} custom_control;
 
 		Vesc(char *interface, uint8_t controllerID);
+		Vesc(char *interface, uint8_t controllerID, uint32_t quirks);
 		void setPoint(mc_control_mode mode, float setpoint);
 		void setDuty(float dutyCycle);
 		void setCurrent(float current);

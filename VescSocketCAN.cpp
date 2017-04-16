@@ -7,6 +7,12 @@ Vesc::Vesc(char *interface, uint8_t controllerID) {
 	_controllerID = controllerID;
 }
 
+Vesc::Vesc(char *interface, uint8_t controllerID, uint32_t quirks) {
+	init_socketCAN(interface);
+	_controllerID = controllerID;
+	_quirks = quirks;
+}
+
 void Vesc::init_socketCAN(char *ifname) {
 	
 	s = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW); //create nonblocking raw can socket
@@ -121,7 +127,8 @@ void Vesc::processMessages() {
 		int a = read(s, &msg, sizeof(msg));
 		if(a == -1) break;
 		if( (msg.can_id & ~0x80000000 & 0xFF) == _controllerID) {
-			gettimeofday(&_prevmsgtime, NULL);	
+			//std::cout << "canid " << std::hex << (msg.can_id & ~0x80000000 & 0xFF) << std::dec << std::endl;
+			//std::cout << "canid " << std::hex << (msg.can_id) << std::dec << std::endl;
 
 			switch( (msg.can_id & ~0x80000000 & ~_controllerID) >> 8) {
 				case CAN_PACKET_STATUS: //default status message, probably going to be unused but we can handle it if it does appear
@@ -129,25 +136,30 @@ void Vesc::processMessages() {
 					//_rpm = __bswap_32((*(VESC_status*) msg.data).rpm); // pointer casting!
 					//_current = ((int16_t) __bswap_16((*(VESC_status*) msg.data).current)) / 10.0; 
 					_duty_cycle = ((int16_t) __bswap_16((*(VESC_status*) msg.data).duty_cycle)) / 1000.0;
+					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				case CAN_PACKET_STATUS1: //custom status message
 					_rpm = (*(VESC_status1*) msg.data).rpm;
 					_current = (*(VESC_status1*) msg.data).motorCurrent / 10.0;
 					_position = (*(VESC_status1*) msg.data).position / 1000.0;
+					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				case CAN_PACKET_STATUS2:
 					_tachometer = (*(VESC_status2*) msg.data).tachometer;
+					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				case CAN_PACKET_STATUS3:
 					_wattHours = (*(VESC_status3*) msg.data).wattHours;
 					_inCurrent = (*(VESC_status3*) msg.data).inCurrent / 100.0;
 					_vin = (*(VESC_status3*) msg.data).voltage;
+					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				case CAN_PACKET_STATUS4:
 					_tempMotor = (*(VESC_status4*) msg.data).tempMotor;
 					_tempPCB = (*(VESC_status4*) msg.data).tempPCB;
 					_fault_code = (mc_fault_code) (*(VESC_status4*) msg.data).faultCode;
 					_state = (mc_state) (*(VESC_status4*) msg.data).state;
+					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				default:
 					break;
@@ -197,6 +209,7 @@ float Vesc::getVin() {
 #define NTC_RES_GND(adc_val)    (10000.0*adc_val/4095.0)/(1-adc_val/4095.0)
 #define NTC_RES(adc_val)        ((4095.0 * 10000.0) / adc_val - 10000.0)
 #define NTC_TEMP(adc_val)       (1.0 / ((log(NTC_RES(adc_val) / 10000.0) / 3434.0) + (1.0 / 298.15)) - 273.15) // use when ntc is connected to vcc
+#define NTC_TEMP_1k_THERM(adc_val)       (1.0 / ((log(NTC_RES(adc_val) / 1000.0) / 3434.0) + (1.0 / 298.15)) - 273.15) // use when ntc is connected to vcc
 #define NTC_TEMP_GND(adc_val)   (1.0 / ((log(NTC_RES_GND(adc_val) / 10000.0) / 3434.0) + (1.0 / 298.15)) - 273.15) // use when ntc is connected to ground
 float Vesc::getTempMotor() {
 	processMessages();
@@ -204,6 +217,7 @@ float Vesc::getTempMotor() {
 }
 float Vesc::getTempPCB() {
 	processMessages();
+	if(_quirks == 1) return NTC_TEMP_1k_THERM(_tempPCB);
 	return NTC_TEMP(_tempPCB);
 }
 Vesc::mc_fault_code Vesc::getFaultCode() {
