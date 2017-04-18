@@ -159,6 +159,7 @@ void Vesc::processMessages() {
 					_tempPCB = (*(VESC_status4*) msg.data).tempPCB;
 					_fault_code = (mc_fault_code) (*(VESC_status4*) msg.data).faultCode;
 					_state = (mc_state) (*(VESC_status4*) msg.data).state;
+					_encoderIndex = (*(VESC_status4*) msg.data).encoderIndex;
 					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				default:
@@ -239,6 +240,10 @@ void Vesc::resetWattHours() {
 	memcpy(frame.data, &config, sizeof(custom_config_data));
 
 	write(s, &frame, sizeof(struct can_frame));
+}
+bool Vesc::encoderIndexFound() {
+	processMessages();
+	return _encoderIndex;
 }
 int timediffms(struct timeval tv, struct timeval last_tv) {
                 // stolen from candump.c

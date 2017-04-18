@@ -57,6 +57,7 @@ class Vesc {
 		float _vin;
 		float _tempMotor;
 		float _tempPCB;
+		bool _encoderIndex;
 		mc_fault_code _fault_code;
 		mc_state _state;
 
@@ -94,7 +95,7 @@ class Vesc {
 			unsigned tempPCB:12;
 			unsigned faultCode:3;
 			unsigned state:2;
-			//unsigned encoderIndex:1;
+			unsigned encoderIndex:1;
 		} VESC_status4;
 
 
@@ -180,6 +181,6 @@ class Vesc {
 		mc_state getState();
 
 		void resetWattHours();
-		//bool encoderIndexFound();
+		bool encoderIndexFound();
 		bool isAlive();
 };
