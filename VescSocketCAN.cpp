@@ -11,6 +11,8 @@ Vesc::Vesc(char *interface, uint8_t controllerID, uint32_t quirks) {
 	init_socketCAN(interface);
 	_controllerID = controllerID;
 	_quirks = quirks;
+	gettimeofday(&_prevmsgtime, NULL); //initialize _prevmsgtime with something
+	_prevmsgtime.tv_sec -= 1; //make it in the past to avoid false positives
 }
 
 void Vesc::init_socketCAN(char *ifname) {
@@ -260,5 +262,5 @@ int timediffms(struct timeval tv, struct timeval last_tv) {
 bool Vesc::isAlive() {
 	struct timeval now;
 	gettimeofday(&now, NULL);
-	return timediffms(now, _prevmsgtime) < 100;
+	return timediffms(now, _prevmsgtime) < 100; //must have received a message in the last 100 ms
 }
