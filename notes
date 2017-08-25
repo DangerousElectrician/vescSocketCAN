@@ -53,3 +53,6 @@ do not set minimum current to zero, 0.01 minimum
 
 Changing a task in the broadcast manager is exactly the same as setting it up
 	use TX_SETUP as the opcode
+
+use compile commands.json for autocompletion
+	generate with 'bear make' and add -std=c++11 to so fixed width integer types are recognized
