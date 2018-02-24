@@ -148,6 +148,9 @@ void Vesc::processMessages() {
 					break;
 				case CAN_PACKET_STATUS2:
 					_tachometer = (*(VESC_status2*) msg.data).tachometer;
+					_adc = (*(VESC_status2*) msg.data).adc;
+					_flimit = (*(VESC_status2*) msg.data).flimit;
+					_rlimit = (*(VESC_status2*) msg.data).rlimit;
 					gettimeofday(&_prevmsgtime, NULL);	
 					break;
 				case CAN_PACKET_STATUS3:
@@ -263,4 +266,19 @@ bool Vesc::isAlive() {
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	return timediffms(now, _prevmsgtime) < 100; //must have received a message in the last 100 ms
+}
+
+bool Vesc::getForLimit() {
+	processMessages();
+	return _flimit;
+}
+
+bool Vesc::getRevLimit() {
+	processMessages();
+	return _rlimit;
+}
+
+int Vesc::getADC() {
+	processMessages();
+	return _adc;
 }

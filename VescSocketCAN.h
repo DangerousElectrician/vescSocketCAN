@@ -58,6 +58,9 @@ class Vesc {
 		float _tempMotor;
 		float _tempPCB;
 		bool _encoderIndex;
+		int32_t _adc;
+		bool _flimit;
+		bool _rlimit;
 		mc_fault_code _fault_code;
 		mc_state _state;
 
@@ -82,7 +85,10 @@ class Vesc {
 		// slightly less updated 50hz
 		typedef struct VESC_status2 { // 32bits
 			int tachometer:32;
-		} VESC_status2;
+			unsigned adc:12;
+			unsigned flimit:1;
+			unsigned rlimit:1;
+		}__attribute__((packed)) VESC_status2;
 
 		// even less updated 10hz
 		typedef struct VESC_status3 { // 60bits
@@ -179,6 +185,10 @@ class Vesc {
 		float getTempPCB();
 		mc_fault_code getFaultCode();
 		mc_state getState();
+
+		bool getForLimit();
+		bool getRevLimit();
+		int getADC();
 
 		void resetWattHours();
 		bool encoderIndexFound();
